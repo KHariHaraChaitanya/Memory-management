@@ -1,36 +1,72 @@
-# Memory-management
-Memory management comparison of Go, Rust, C++ 
+# Memory Management Comparison
 
-# Stack vs Heap Memory
-
-This repository demonstrates core memory‑management models across four languages (C, C++, Go, Rust) using a uniform “in‑memory cache” workflow. Each demo highlights how allocation and cleanup happen under the hood.
+A concise demonstration of memory‑management models in Go, Rust, and C++ using a unified “in‑memory cache” example. Each implementation highlights allocation and reclamation strategies at work.
 
 ---
 
-## Introduction
+## Table of Contents
 
-### Manual Memory Management in C/C++
-In C and traditional C++, every heap allocation and deallocation is under the programmer’s direct control. You call `malloc`/`free` (or `new`/`delete`) to reserve and release memory, and the runtime will neither track nor garbage‑collect anything for you. This gives you maximum flexibility and minimal runtime overhead, but also puts the onus squarely on you to:
+1. [Overview](#overview)  
+2. [Stack vs. Heap](#stack-vs-heap)  
+3. [C/C++: Manual Allocation & RAII](#cc-manual-allocation--raii)  
+4. [Go: Garbage‑Collected Heap](#go-garbage-collected-heap)  
 
-- **Match allocations and frees** exactly—miss one and you leak memory; double‑free and you invite crashes or security holes.  
-- **Avoid dangling pointers**—using memory after it’s been freed leads to undefined behavior.  
-- **Manage fragmentation**—small, scattered allocations can leave your heap full of unusable gaps over time.  
-
-C++ smart pointers (e.g. `std::unique_ptr`, `std::shared_ptr`) build on these primitives with RAII (“Resource Acquisition Is Initialization”), automatically calling `delete` when an object goes out of scope. RAII dramatically reduces leaks and simplifies ownership, but it still relies on deterministic destructors rather than a background collector.
-
-### Automatic Memory Management with Garbage Collection
-Languages like Go, Java, and JavaScript shift the burden of reclaiming unused memory from the programmer to the runtime via a **garbage collector (GC)**. The core idea is:
-
-1. **Allocation** on the heap is still explicit (`new`, `make`, etc.), but you never call `free`.  
-2. **Roots** (global variables, stack variables, CPU registers) are scanned to find all live objects.  
-3. **Mark phase**: reachable objects are “marked” as in‑use.  
-4. **Sweep (or compact) phase**: unmarked objects are reclaimed or moved, freeing up memory automatically.  
-
-This approach greatly simplifies application code—there’s no manual free, and many classes of bugs (dangling pointers, double‑free) vanish. However, it introduces:
-
-- **Non‑deterministic latency**: GC pauses can interrupt your program at unpredictable times.  
-- **Runtime overhead**: the collector needs CPU and memory to track object graphs and perform reclamation.  
-- **Tuning complexity**: large heaps or long‑lived objects often require tuning generational strategies, pause‑time budgets, or concurrency settings.
 
 ---
 
+## Overview
+
+This repository presents side‑by‑side demos of a simple in‑memory cache in C, C++, Go, and Rust. By running each version, you can observe:
+
+- How memory is allocated (stack vs. heap)  
+- When and how unused data is reclaimed  
+- The trade‑offs between manual control, RAII, garbage collection, and ownership models  
+
+---
+
+## Stack vs. Heap
+
+- **Stack**  
+  - Stores local variables and function call frames  
+  - Allocation and deallocation occur automatically on scope entry and exit  
+  - Very low overhead, but limited in size and lifetime  
+
+- **Heap**  
+  - Used for dynamic allocations whose lifetime extends beyond a single function call  
+  - Requires explicit management (manual free, RAII, or automatic GC)  
+  - More flexible, but comes with overhead and potential fragmentation  
+
+---
+
+## C/C++: Manual Allocation & RAII
+
+In C and classic C++, memory management is the programmer’s responsibility:
+
+- **Manual** (`malloc`/`free` or `new`/`delete`)  
+  - Offers maximal performance and control  
+  - Risks memory leaks, double‑free errors, and dangling pointers  
+
+- **RAII** (`std::unique_ptr`, `std::shared_ptr`)  
+  - Encapsulates resource lifetime in object scope  
+  - Ensures deterministic destruction, reducing leaks and mismatched frees  
+
+---
+
+## Go: Garbage‑Collected Heap
+
+Go automates heap reclamation through a concurrent, generational garbage collector:
+
+1. **Allocation** remains explicit (`new`, `make`) but without manual frees.  
+2. **Root scanning** identifies live objects via global variables, stack frames, and registers.  
+3. **Mark phase** flags all reachable objects.  
+4. **Sweep/compact phase** reclaims unmarked memory or compacts live objects.  
+
+**Advantages**  
+- Eliminates most manual‑free errors and dangling pointers  
+- Simplifies application code  
+
+**Considerations**  
+- GC introduces non‑deterministic pause times  
+- Runtime and tuning overhead for large heaps  
+
+---
